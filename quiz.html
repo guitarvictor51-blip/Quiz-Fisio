@@ -1,0 +1,347 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Cinesiologia da Mão</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #quiz-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        #question {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        .option {
+            display: block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            margin: 10px auto;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 80%;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+        .option:hover {
+            background-color: #0056b3;
+        }
+        #timer {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: red;
+            animation: pulse 1s infinite;
+        }
+        #feedback {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        #next-btn {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: none;
+        }
+        #start-btn {
+            background-color: #ffc107;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        #score {
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+        #name-input {
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 1em;
+            width: 80%;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div id="quiz-container">
+        <h1>Quiz de Cinesiologia da Mão</h1>
+        <input type="text" id="name-input" placeholder="Digite seu nome">
+        <button id="start-btn">Iniciar Quiz</button>
+        <div id="question" style="display: none;"></div>
+        <div id="options" style="display: none;"></div>
+        <div id="timer" style="display: none;">Tempo restante: 15s</div>
+        <div id="feedback" style="display: none;"></div>
+        <button id="next-btn">Próxima Pergunta</button>
+        <div id="score" style="display: none;"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+        import { getDatabase, ref, push } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8lJYuwXsInXmznCiUuHhhRZJil9l6UuA",
+            authDomain: "quizcinesiologia.firebaseapp.com",
+            databaseURL: "https://quizcinesiologia-default-rtdb.firebaseio.com",
+            projectId: "quizcinesiologia",
+            storageBucket: "quizcinesiologia.firebasestorage.app",
+            messagingSenderId: "221899304568",
+            appId: "1:221899304568:web:6087d624e60b00a5c4078d",
+            measurementId: "G-YWWD74Y8KD"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        const questions = [
+            {
+                question: "Quantos ossos compõem a estrutura óssea da mão?",
+                options: ["19", "27", "32", "14"],
+                correct: 1
+            },
+            {
+                question: "Quais são os três grupos principais de ossos na mão?",
+                options: ["Carpo, Metacarpos e Falanges", "Társos, Metatársos e Falanges", "Cúbito, Rádio e Úmero", "Punho, Palma e Dedos"],
+                correct: 0
+            },
+            {
+                question: "Qual é o número de ossos no carpo?",
+                options: ["5", "8", "14", "27"],
+                correct: 1
+            },
+            {
+                question: "Os músculos extrínsecos da mão originam-se em qual região?",
+                options: ["Na própria mão", "No antebraço", "No braço", "No ombro"],
+                correct: 1
+            },
+            {
+                question: "Qual movimento permite que o polegar toque os outros dedos?",
+                options: ["Flexão", "Extensão", "Abdução", "Oposição"],
+                correct: 3
+            },
+            {
+                question: "Em qual plano ocorre a flexão e extensão da mão?",
+                options: ["Frontal", "Sagital", "Transversal", "Multiplanar"],
+                correct: 1
+            },
+            {
+                question: "Qual tipo de preensão é utilizado para segurar uma bola?",
+                options: ["Preensão cilíndrica", "Preensão esférica", "Pinça", "Polpa a polpa"],
+                correct: 1
+            },
+            {
+                question: "Qual condição envolve a compressão do nervo mediano?",
+                options: ["Tendinite", "Síndrome do Túnel do Carpo", "Deformidade em botoeira", "Pescoço de cisne"],
+                correct: 1
+            },
+            {
+                question: "Na biomecânica da mão, os dedos atuam como o quê?",
+                options: ["Alavancas", "Tendões", "Nervos", "Articulações"],
+                correct: 0
+            },
+            {
+                question: "Qual é o foco principal dos exercícios de propriocepção na fisioterapia da mão?",
+                options: ["Fortalecimento muscular", "Reeducação da percepção da posição e movimento", "Aumento de força de pinça", "Treino para atividades diárias"],
+                correct: 1
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 15;
+        let startTime;
+        let selectedOption = null;
+        let userName = '';
+
+        const startBtn = document.getElementById('start-btn');
+        const nameInput = document.getElementById('name-input');
+        const questionEl = document.getElementById('question');
+        const optionsEl = document.getElementById('options');
+        const timerEl = document.getElementById('timer');
+        const feedbackEl = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        const scoreEl = document.getElementById('score');
+
+        startBtn.addEventListener('click', startQuiz);
+
+        function startQuiz() {
+            userName = nameInput.value.trim();
+            if (!userName) {
+                alert('Por favor, digite seu nome para começar!');
+                return;
+            }
+            nameInput.style.display = 'none';
+            startBtn.style.display = 'none';
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= questions.length) {
+                endQuiz();
+                return;
+            }
+
+            questionEl.style.display = 'block';
+            optionsEl.style.display = 'block';
+            timerEl.style.display = 'block';
+            feedbackEl.style.display = 'none';
+            nextBtn.style.display = 'none';
+            selectedOption = null;
+
+            questionEl.innerText = questions[currentQuestion].question;
+            optionsEl.innerHTML = '';
+
+            questions[currentQuestion].options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.classList.add('option');
+                btn.innerText = option;
+                btn.addEventListener('click', () => selectAnswer(index));
+                optionsEl.appendChild(btn);
+            });
+
+            timeLeft = 15;
+            timerEl.innerText = `Tempo restante: ${timeLeft}s`;
+            startTime = Date.now();
+            timer = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timerEl.innerText = `Tempo restante: ${timeLeft}s`;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                showFeedback(false, questions[currentQuestion].correct, null);
+            }
+        }
+
+        function selectAnswer(selected) {
+            clearInterval(timer);
+            selectedOption = selected;
+            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+            const isCorrect = selected === questions[currentQuestion].correct;
+            if (isCorrect) {
+                const points = 100 + (15 - timeTaken) * 10;
+                score += points;
+            }
+            showFeedback(isCorrect, questions[currentQuestion].correct, selected);
+        }
+
+        function showFeedback(isCorrect, correctIndex, selected) {
+            const options = document.querySelectorAll('.option');
+            options.forEach((btn, index) => {
+                btn.disabled = true;
+                if (index === correctIndex) {
+                    btn.style.backgroundColor = '#28a745';
+                } else if (selected !== null && index === selected) {
+                    btn.style.backgroundColor = '#dc3545';
+                }
+            });
+
+            feedbackEl.style.display = 'block';
+            feedbackEl.innerText = isCorrect ? 'Correto!' : `Errado! A resposta correta é: ${questions[currentQuestion].options[correctIndex]}`;
+            feedbackEl.style.color = isCorrect ? 'green' : 'red';
+
+            nextBtn.style.display = 'block';
+            nextBtn.addEventListener('click', nextQuestion, { once: true });
+            timerEl.style.display = 'none';
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            showQuestion();
+        }
+
+        function endQuiz() {
+            questionEl.style.display = 'none';
+            optionsEl.style.display = 'none';
+            timerEl.style.display = 'none';
+            feedbackEl.style.display = 'none';
+            nextBtn.style.display = 'none';
+            scoreEl.style.display = 'block';
+            scoreEl.innerText = `Pontuação final de ${userName}: ${score} pontos`;
+
+            // Salvar pontuação no Firebase
+            const scoreRef = ref(database, 'scores');
+            push(scoreRef, {
+                name: userName,
+                score: score,
+                timestamp: new Date().toISOString()
+            });
+        }
+    </script>
+</body>
+</html>
