@@ -1,0 +1,133 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controle - Quiz Cinesiologia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+            text-align: center;
+        }
+        #dashboard-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        #scores {
+            text-align: left;
+            margin-top: 20px;
+        }
+        #scores p {
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+        #clear-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="dashboard-container">
+        <h1>Painel de Controle - Resultados do Quiz</h1>
+        <div id="scores"></div>
+        <button id="clear-btn">Limpar Resultados</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+        import { getDatabase, ref, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8lJYuwXsInXmznCiUuHhhRZJil9l6UuA",
+            authDomain: "quizcinesiologia.firebaseapp.com",
+            databaseURL: "https://quizcinesiologia-default-rtdb.firebaseio.com",
+            projectId: "quizcinesiologia",
+            storageBucket: "quizcinesiologia.firebasestorage.app",
+            messagingSenderId: "221899304568",
+            appId: "1:221899304568:web:6087d624e60b00a5c4078d",
+            measurementId: "G-YWWD74Y8KD"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const scoresEl = document.getElementById('scores');
+        const clearBtn = document.getElementById('clear-btn');
+
+        // Escutar atualizações em tempo real
+        const scoresRef = ref(database, 'scores');
+        onValue(scoresRef, (snapshot) => {
+            scoresEl.innerHTML = '<h2>Pontuações</h2>';
+            const scores = snapshot.val();
+            if (!scores) {
+                scoresEl.innerHTML += '<p>Nenhuma pontuação registrada ainda.</p>';
+                return;
+            }
+            Object.values(scores).sort((a, b) => b.score - a.score).forEach((entry, index) => {
+                scoresEl.innerHTML += `<p>${index + 1}. ${entry.name}: ${entry.score} pontos (${entry.timestamp})</p>`;
+            });
+        });
+
+        // Limpar resultados
+        clearBtn.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja limpar todos os resultados?')) {
+                remove(ref(database, 'scores'));
+                scoresEl.innerHTML = '<h2>Pontuações</h2><p>Nenhuma pontuação registrada ainda.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
