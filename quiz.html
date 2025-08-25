@@ -61,31 +61,49 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+        #quiz-container {
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+        #review {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-bottom: 2rem;
+        }
         @media (max-width: 640px) {
             #quiz-container {
-                padding: 1rem;
+                padding: 0.5rem;
             }
             h1 {
-                font-size: 1.5rem;
+                font-size: 1.25rem;
             }
             .option {
                 padding: 0.5rem;
+                font-size: 0.85rem;
+            }
+            #question {
                 font-size: 0.9rem;
+            }
+            #feedback, #score, #review p {
+                font-size: 0.85rem;
+            }
+            #review {
+                max-height: 50vh;
             }
         }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-2">
-    <div id="quiz-container" class="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg text-center">
+    <div id="quiz-container" class="bg-white p-4 rounded-lg shadow-lg w-full max-w-md text-center">
         <h1 class="text-xl font-bold text-gray-800 mb-4">Quiz de Cinesiologia da Mão</h1>
         <input type="text" id="name-input" placeholder="Digite seu nome" class="border rounded-lg p-2 w-3/4 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
         <button id="start-btn" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500 transition">Iniciar Quiz</button>
-        <div id="question" class="text-lg mb-4 hidden"></div>
+        <div id="question" class="text-base mb-4 hidden"></div>
         <div id="options" class="flex flex-col gap-2 hidden"></div>
         <div id="timer" class="text-base mb-2 hidden">Tempo restante: 15s</div>
         <div id="feedback" class="text-base mb-2 hidden"></div>
         <button id="next-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition hidden">Próxima Pergunta</button>
-        <div id="score" class="text-lg font-semibold hidden"></div>
+        <div id="score" class="text-base font-semibold hidden"></div>
         <div id="review" class="text-left hidden"></div>
     </div>
 
@@ -179,7 +197,7 @@
         let startTime;
         let selectedOption = null;
         let userName = '';
-        let userAnswers = []; // Armazena respostas do usuário
+        let userAnswers = [];
 
         const startBtn = document.getElementById('start-btn');
         const nameInput = document.getElementById('name-input');
@@ -222,7 +240,7 @@
 
             questions[currentQuestion].options.forEach((option, index) => {
                 const btn = document.createElement('button');
-                btn.classList.add('bg-blue-500', 'text-white', 'p-2', 'rounded-lg', 'w-3/4', 'mx-auto', 'hover:bg-blue-600', 'transition', 'fade-in');
+                btn.classList.add('bg-blue-500', 'text-white', 'p-2', 'rounded-lg', 'w-3/4', 'mx-auto', 'hover:bg-blue-600', 'transition', 'fade-in', 'option');
                 btn.innerText = option;
                 btn.addEventListener('click', () => selectAnswer(index));
                 optionsEl.appendChild(btn);
@@ -262,14 +280,18 @@
             options.forEach((btn, index) => {
                 btn.disabled = true;
                 if (index === correctIndex) {
+                    btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
                     btn.classList.add('bg-green-500');
-                } else if (selected !== null && index === selected) {
+                }
+                if (selected !== null && index === selected && !isCorrect) {
+                    btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
                     btn.classList.add('bg-red-500');
                 }
             });
 
             feedbackEl.classList.remove('hidden');
             feedbackEl.innerText = isCorrect ? 'Correto!' : `Errado! A resposta correta é: ${questions[currentQuestion].options[correctIndex]}`;
+            feedbackEl.classList.remove('text-green-500', 'text-red-500');
             feedbackEl.classList.add(isCorrect ? 'text-green-500' : 'text-red-500');
 
             nextBtn.classList.remove('hidden');
@@ -294,7 +316,6 @@
             scoreEl.innerText = `Pontuação final de ${userName}: ${score} pontos`;
             scoreEl.classList.add('fade-in');
 
-            // Exibir revisão com respostas corretas e explicações
             reviewEl.innerHTML = '<h2 class="text-lg font-semibold text-gray-700 mb-4">Revisão das Respostas</h2>';
             questions.forEach((q, index) => {
                 const userAnswer = userAnswers[index];
@@ -312,7 +333,6 @@
                 `;
             });
 
-            // Salvar pontuação no Firebase
             const scoreRef = ref(database, 'scores');
             push(scoreRef, {
                 name: userName,
