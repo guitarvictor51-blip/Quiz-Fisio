@@ -43,107 +43,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz de Cinesiologia da Mão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        #quiz-container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 80%;
-            max-width: 600px;
-            text-align: center;
-        }
-        #question {
-            font-size: 1.5em;
-            margin-bottom: 20px;
-            animation: fadeIn 1s ease-in-out;
-        }
-        .option {
-            display: block;
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            margin: 10px auto;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 80%;
-            font-size: 1em;
-            transition: background-color 0.3s;
-        }
-        .option:hover {
-            background-color: #0056b3;
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
         }
         #timer {
-            font-size: 1.2em;
-            margin-bottom: 10px;
             color: red;
             animation: pulse 1s infinite;
         }
-        #feedback {
-            font-size: 1.2em;
-            margin: 10px 0;
-        }
-        #next-btn {
-            background-color: #28a745;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
-            display: none;
-        }
-        #start-btn {
-            background-color: #ffc107;
-            color: black;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.2em;
-        }
-        #score {
-            font-size: 1.5em;
-            margin-top: 20px;
-        }
-        #name-input {
-            margin-bottom: 20px;
-            padding: 10px;
-            font-size: 1em;
-            width: 80%;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
         @keyframes pulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.05); }
             100% { transform: scale(1); }
+        }
+        @media (max-width: 640px) {
+            #quiz-container {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .option {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
-<body>
-    <div id="quiz-container">
-        <h1>Quiz de Cinesiologia da Mão</h1>
-        <input type="text" id="name-input" placeholder="Digite seu nome">
-        <button id="start-btn">Iniciar Quiz</button>
-        <div id="question" style="display: none;"></div>
-        <div id="options" style="display: none;"></div>
-        <div id="timer" style="display: none;">Tempo restante: 15s</div>
-        <div id="feedback" style="display: none;"></div>
-        <button id="next-btn">Próxima Pergunta</button>
-        <div id="score" style="display: none;"></div>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-2">
+    <div id="quiz-container" class="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg text-center">
+        <h1 class="text-xl font-bold text-gray-800 mb-4">Quiz de Cinesiologia da Mão</h1>
+        <input type="text" id="name-input" placeholder="Digite seu nome" class="border rounded-lg p-2 w-3/4 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button id="start-btn" class="bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-500 transition">Iniciar Quiz</button>
+        <div id="question" class="text-lg mb-4 hidden"></div>
+        <div id="options" class="flex flex-col gap-2 hidden"></div>
+        <div id="timer" class="text-base mb-2 hidden">Tempo restante: 15s</div>
+        <div id="feedback" class="text-base mb-2 hidden"></div>
+        <button id="next-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition hidden">Próxima Pergunta</button>
+        <div id="score" class="text-lg font-semibold hidden"></div>
+        <div id="review" class="text-left hidden"></div>
     </div>
 
     <script type="module">
@@ -170,52 +113,62 @@
             {
                 question: "Quantos ossos compõem a estrutura óssea da mão?",
                 options: ["19", "27", "32", "14"],
-                correct: 1
+                correct: 1,
+                explanation: "A mão humana tem 27 ossos: 8 no carpo (punho), 5 metacarpos (palma) e 14 falanges (dedos). Esse número é essencial para entender a estrutura da mão."
             },
             {
                 question: "Quais são os três grupos principais de ossos na mão?",
                 options: ["Carpo, Metacarpos e Falanges", "Társos, Metatársos e Falanges", "Cúbito, Rádio e Úmero", "Punho, Palma e Dedos"],
-                correct: 0
+                correct: 0,
+                explanation: "Os ossos da mão são divididos em carpo (8 ossos do punho), metacarpos (5 ossos da palma) e falanges (14 ossos dos dedos). Társos são ossos do pé, e cúbito/rádio são do antebraço."
             },
             {
                 question: "Qual é o número de ossos no carpo?",
                 options: ["5", "8", "14", "27"],
-                correct: 1
+                correct: 1,
+                explanation: "O carpo, ou punho, é formado por 8 ossos dispostos em duas fileiras (proximal e distal), que conectam o antebraço à mão e permitem movimentos complexos."
             },
             {
                 question: "Os músculos extrínsecos da mão originam-se em qual região?",
                 options: ["Na própria mão", "No antebraço", "No braço", "No ombro"],
-                correct: 1
+                correct: 1,
+                explanation: "Os músculos extrínsecos da mão têm origem no antebraço e se inserem nos ossos da mão via tendões, permitindo movimentos como flexão e extensão dos dedos."
             },
             {
                 question: "Qual movimento permite que o polegar toque os outros dedos?",
                 options: ["Flexão", "Extensão", "Abdução", "Oposição"],
-                correct: 3
+                correct: 3,
+                explanation: "A oposição é o movimento único do polegar que permite tocar as pontas dos outros dedos, essencial para preensão e manipulação de objetos."
             },
             {
                 question: "Em qual plano ocorre a flexão e extensão da mão?",
                 options: ["Frontal", "Sagital", "Transversal", "Multiplanar"],
-                correct: 1
+                correct: 1,
+                explanation: "Flexão e extensão da mão ocorrem no plano sagital, que divide o corpo em lados esquerdo e direito, permitindo movimentos para frente e para trás."
             },
             {
                 question: "Qual tipo de preensão é utilizado para segurar uma bola?",
                 options: ["Preensão cilíndrica", "Preensão esférica", "Pinça", "Polpa a polpa"],
-                correct: 1
+                correct: 1,
+                explanation: "A preensão esférica envolve todos os dedos e a palma curvados ao redor de um objeto esférico, como uma bola, para segurá-lo firmemente."
             },
             {
                 question: "Qual condição envolve a compressão do nervo mediano?",
                 options: ["Tendinite", "Síndrome do Túnel do Carpo", "Deformidade em botoeira", "Pescoço de cisne"],
-                correct: 1
+                correct: 1,
+                explanation: "A Síndrome do Túnel do Carpo ocorre quando o nervo mediano é comprimido no canal do carpo, causando dormência e fraqueza na mão."
             },
             {
                 question: "Na biomecânica da mão, os dedos atuam como o quê?",
                 options: ["Alavancas", "Tendões", "Nervos", "Articulações"],
-                correct: 0
+                correct: 0,
+                explanation: "Os dedos funcionam como alavancas na biomecânica, amplificando a força dos músculos para realizar movimentos e preensões."
             },
             {
                 question: "Qual é o foco principal dos exercícios de propriocepção na fisioterapia da mão?",
                 options: ["Fortalecimento muscular", "Reeducação da percepção da posição e movimento", "Aumento de força de pinça", "Treino para atividades diárias"],
-                correct: 1
+                correct: 1,
+                explanation: "Exercícios de propriocepção focam na reeducação da percepção de posição e movimento, ajudando a restaurar a coordenação após lesões na mão."
             }
         ];
 
@@ -226,6 +179,7 @@
         let startTime;
         let selectedOption = null;
         let userName = '';
+        let userAnswers = []; // Armazena respostas do usuário
 
         const startBtn = document.getElementById('start-btn');
         const nameInput = document.getElementById('name-input');
@@ -235,6 +189,7 @@
         const feedbackEl = document.getElementById('feedback');
         const nextBtn = document.getElementById('next-btn');
         const scoreEl = document.getElementById('score');
+        const reviewEl = document.getElementById('review');
 
         startBtn.addEventListener('click', startQuiz);
 
@@ -244,8 +199,8 @@
                 alert('Por favor, digite seu nome para começar!');
                 return;
             }
-            nameInput.style.display = 'none';
-            startBtn.style.display = 'none';
+            nameInput.classList.add('hidden');
+            startBtn.classList.add('hidden');
             showQuestion();
         }
 
@@ -255,11 +210,11 @@
                 return;
             }
 
-            questionEl.style.display = 'block';
-            optionsEl.style.display = 'block';
-            timerEl.style.display = 'block';
-            feedbackEl.style.display = 'none';
-            nextBtn.style.display = 'none';
+            questionEl.classList.remove('hidden');
+            optionsEl.classList.remove('hidden');
+            timerEl.classList.remove('hidden');
+            feedbackEl.classList.add('hidden');
+            nextBtn.classList.add('hidden');
             selectedOption = null;
 
             questionEl.innerText = questions[currentQuestion].question;
@@ -267,7 +222,7 @@
 
             questions[currentQuestion].options.forEach((option, index) => {
                 const btn = document.createElement('button');
-                btn.classList.add('option');
+                btn.classList.add('bg-blue-500', 'text-white', 'p-2', 'rounded-lg', 'w-3/4', 'mx-auto', 'hover:bg-blue-600', 'transition', 'fade-in');
                 btn.innerText = option;
                 btn.addEventListener('click', () => selectAnswer(index));
                 optionsEl.appendChild(btn);
@@ -284,6 +239,7 @@
             timerEl.innerText = `Tempo restante: ${timeLeft}s`;
             if (timeLeft <= 0) {
                 clearInterval(timer);
+                userAnswers.push({ selected: null, correct: questions[currentQuestion].correct });
                 showFeedback(false, questions[currentQuestion].correct, null);
             }
         }
@@ -293,6 +249,7 @@
             selectedOption = selected;
             const timeTaken = Math.floor((Date.now() - startTime) / 1000);
             const isCorrect = selected === questions[currentQuestion].correct;
+            userAnswers.push({ selected, correct: questions[currentQuestion].correct });
             if (isCorrect) {
                 const points = 100 + (15 - timeTaken) * 10;
                 score += points;
@@ -301,23 +258,23 @@
         }
 
         function showFeedback(isCorrect, correctIndex, selected) {
-            const options = document.querySelectorAll('.option');
+            const options = document.querySelectorAll('#options button');
             options.forEach((btn, index) => {
                 btn.disabled = true;
                 if (index === correctIndex) {
-                    btn.style.backgroundColor = '#28a745';
+                    btn.classList.add('bg-green-500');
                 } else if (selected !== null && index === selected) {
-                    btn.style.backgroundColor = '#dc3545';
+                    btn.classList.add('bg-red-500');
                 }
             });
 
-            feedbackEl.style.display = 'block';
+            feedbackEl.classList.remove('hidden');
             feedbackEl.innerText = isCorrect ? 'Correto!' : `Errado! A resposta correta é: ${questions[currentQuestion].options[correctIndex]}`;
-            feedbackEl.style.color = isCorrect ? 'green' : 'red';
+            feedbackEl.classList.add(isCorrect ? 'text-green-500' : 'text-red-500');
 
-            nextBtn.style.display = 'block';
+            nextBtn.classList.remove('hidden');
             nextBtn.addEventListener('click', nextQuestion, { once: true });
-            timerEl.style.display = 'none';
+            timerEl.classList.add('hidden');
         }
 
         function nextQuestion() {
@@ -326,13 +283,34 @@
         }
 
         function endQuiz() {
-            questionEl.style.display = 'none';
-            optionsEl.style.display = 'none';
-            timerEl.style.display = 'none';
-            feedbackEl.style.display = 'none';
-            nextBtn.style.display = 'none';
-            scoreEl.style.display = 'block';
+            questionEl.classList.add('hidden');
+            optionsEl.classList.add('hidden');
+            timerEl.classList.add('hidden');
+            feedbackEl.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            scoreEl.classList.remove('hidden');
+            reviewEl.classList.remove('hidden');
+
             scoreEl.innerText = `Pontuação final de ${userName}: ${score} pontos`;
+            scoreEl.classList.add('fade-in');
+
+            // Exibir revisão com respostas corretas e explicações
+            reviewEl.innerHTML = '<h2 class="text-lg font-semibold text-gray-700 mb-4">Revisão das Respostas</h2>';
+            questions.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer.selected === q.correct;
+                const userAnswerText = userAnswer.selected !== null ? q.options[userAnswer.selected] : 'Nenhuma resposta (tempo esgotado)';
+                reviewEl.innerHTML += `
+                    <div class="mb-4 fade-in">
+                        <p class="text-gray-800 font-medium">${index + 1}. ${q.question}</p>
+                        <p class="text-sm ${isCorrect ? 'text-green-500' : 'text-red-500'}">
+                            Sua resposta: ${userAnswerText} ${isCorrect ? '(Correto)' : '(Errado)'}
+                        </p>
+                        <p class="text-sm text-gray-600">Resposta correta: ${q.options[q.correct]}</p>
+                        <p class="text-sm text-gray-500 italic">${q.explanation}</p>
+                    </div>
+                `;
+            });
 
             // Salvar pontuação no Firebase
             const scoreRef = ref(database, 'scores');
